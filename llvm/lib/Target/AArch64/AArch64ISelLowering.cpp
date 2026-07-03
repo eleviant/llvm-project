@@ -10640,6 +10640,11 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   unsigned Opc = IsTailCall ? AArch64ISD::TC_RETURN : AArch64ISD::CALL;
 
+  bool IsCFGuardCheckCall = CallConv == CallingConv::CFGuard_Check;
+  if (IsCFGuardCheckCall)
+    if (CLI.CB->getOperandBundle(LLVMContext::OB_cfguardtarget))
+      IsCFGuardCheckCall = false;
+
   std::vector<SDValue> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -10750,6 +10755,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   Chain = DAG.getNode(Opc, DL, {MVT::Other, MVT::Glue}, Ops);
   if (IsCFICall)
     Chain.getNode()->setCFIType(CLI.CFIType->getZExtValue());
+  if (IsCFGuardCheckCall)
+    DAG.setIsCFGuardCheck(Chain.getNode());
 
   DAG.addNoMergeSiteInfo(Chain.getNode(), CLI.NoMerge);
   InGlue = Chain.getValue(1);

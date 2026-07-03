@@ -1899,6 +1899,8 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << "inbounds ";
   if (getFlag(MachineInstr::LRSplit))
     OS << "lr-split ";
+  if (getFlag(MachineInstr::CFGuardCheck))
+    OS << "cfguard-check ";
 
   // Print the opcode name.
   if (TII)

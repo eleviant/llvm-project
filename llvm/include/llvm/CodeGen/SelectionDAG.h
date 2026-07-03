@@ -306,6 +306,9 @@ class SelectionDAG {
   /// Out-of-line extra information for SDNodes.
   DenseMap<const SDNode *, NodeExtraInfo> SDEI;
 
+  /// CFGuard check calls
+  DenseSet<const SDNode *> CFGCI;
+
   /// PersistentId counter to be used when inserting the next
   /// SDNode to this SelectionDAG. We do not place that under
   /// `#if LLVM_ENABLE_ABI_BREAKING_CHECKS` intentionally because
@@ -2729,6 +2732,10 @@ public:
     auto I = SDEI.find(Node);
     return I != SDEI.end() ? I->second.NoMerge : false;
   }
+
+  bool isCFGuardCheck(const SDNode *Node) const { return CFGCI.contains(Node); }
+
+  void setIsCFGuardCheck(const SDNode *Node) { CFGCI.insert(Node); }
 
   /// Copy extra info associated with one node to another.
   LLVM_ABI void copyExtraInfo(SDNode *From, SDNode *To);

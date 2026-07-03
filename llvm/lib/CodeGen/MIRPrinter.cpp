@@ -894,6 +894,8 @@ static void printMI(raw_ostream &OS, MFPrintState &State,
     OS << "inbounds ";
   if (MI.getFlag(MachineInstr::LRSplit))
     OS << "lr-split ";
+  if (MI.getFlag(MachineInstr::CFGuardCheck))
+    OS << "cfguard-check ";
 
   // NOTE: Please add new MIFlags also to the MI_FLAGS_STR in
   // llvm/utils/UpdateTestChecks/mir.py.

@@ -38,6 +38,7 @@ add_llvm_component_library(LLVMCodeGen
   BasicBlockMatchingAndInference.cpp
   CalcSpillWeights.cpp
   CallingConvLower.cpp
+  CFGuardCheckGlue.cpp
   CFGuardLongjmp.cpp
   CFIFixup.cpp
   CFIInstrInserter.cpp

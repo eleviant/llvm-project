@@ -133,6 +133,10 @@ public:
   bool isArgumentRegister(const MachineFunction &MF,
                           MCRegister Reg) const override;
 
+  bool isCFGuardCheckArgumentRegister(MCRegister PhysReg) const override;
+
+  SmallVector<Register> getCFGuardCheckImmutableRegs() const override;
+
   // Debug information queries.
   Register getFrameRegister(const MachineFunction &MF) const override;
 

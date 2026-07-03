@@ -468,6 +468,14 @@ public:
     return false;
   }
 
+  virtual bool isCFGuardCheckArgumentRegister(MCRegister PhysReg) const {
+    return false;
+  }
+
+  virtual SmallVector<Register> getCFGuardCheckImmutableRegs() const {
+    return {};
+  }
+
   /// Returns true if PhysReg is a fixed register.
   virtual bool isFixedRegister(const MachineFunction &MF,
                                MCRegister PhysReg) const {

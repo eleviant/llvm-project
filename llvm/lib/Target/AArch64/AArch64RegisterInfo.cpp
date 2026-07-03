@@ -749,6 +749,15 @@ bool AArch64RegisterInfo::isArgumentRegister(const MachineFunction &MF,
   }
 }
 
+bool AArch64RegisterInfo::isCFGuardCheckArgumentRegister(MCRegister Reg) const {
+  return llvm::is_contained(CC_AArch64_Win64_CFGuard_Check_ArgRegs, Reg);
+}
+
+SmallVector<Register>
+AArch64RegisterInfo::getCFGuardCheckImmutableRegs() const {
+  return {AArch64::SP};
+}
+
 Register
 AArch64RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const AArch64FrameLowering *TFI = getFrameLowering(MF);

@@ -261,6 +261,10 @@ LLVM_ABI FunctionPass *createDefaultPBQPRegisterAllocator();
 LLVM_ABI extern char &PrologEpilogCodeInserterID;
 LLVM_ABI MachineFunctionPass *createPrologEpilogInserterPass();
 
+/// CFGuardCheckGlue - glues together CFGuard check call and indirect call
+/// Used on Windows only with /guard:cf
+MachineFunctionPass *createCFGuardCheckGluePass();
+
 /// ExpandPostRAPseudos - This pass expands pseudo instructions after
 /// register allocation.
 LLVM_ABI extern char &ExpandPostRAPseudosID;

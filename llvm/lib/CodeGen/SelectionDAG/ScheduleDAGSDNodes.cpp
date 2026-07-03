@@ -909,6 +909,10 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
         It->setMMRAMetadata(MF, MMRA);
     }
 
+    if (DAG->isCFGuardCheck(Node)) {
+      MI->setFlag(MachineInstr::MIFlag::CFGuardCheck);
+    }
+
     return MI;
   };
 
