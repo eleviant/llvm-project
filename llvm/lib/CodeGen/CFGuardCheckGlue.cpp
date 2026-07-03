@@ -23,6 +23,9 @@ using namespace llvm;
 namespace {
 
 class CFGuardGlueImpl {
+  bool regOverlaps(Register R, const SmallVector<Register> &Vec);
+  SmallVector<Register> getRegUses(MachineInstr &MI);
+  const uint32_t *getCallRegMask(MachineInstr &MI);
   bool glueCFGCheckAndCall(MachineInstr *CMI,
                            const MachineBasicBlock::iterator &Target);
 
@@ -36,24 +39,42 @@ public:
   MachineFunction &MF;
   const TargetRegisterInfo *TRI;
 };
+
+bool CFGuardGlueImpl::regOverlaps(Register R,
+                                  const SmallVector<Register> &Vec) {
+  return llvm::any_of(Vec, [&](auto &Reg) { return TRI->regsOverlap(Reg, R); });
+}
+
+SmallVector<Register> CFGuardGlueImpl::getRegUses(MachineInstr &MI) {
+  SmallVector<Register> Uses;
+  for (const MachineOperand &MO : MI.operands())
+    if (MO.isReg() && MO.isUse())
+      Uses.push_back(MO.getReg());
+  return Uses;
+}
+
+const uint32_t *CFGuardGlueImpl::getCallRegMask(MachineInstr &MI) {
+  assert(MI.isCall());
+  for (const MachineOperand &MO : MI.operands())
+    if (MO.isRegMask())
+      return MO.getRegMask();
+  return nullptr;
+}
+
 bool CFGuardGlueImpl::glueCFGCheckAndCall(
     MachineInstr *CMI, const MachineBasicBlock::iterator &Target) {
-  assert(CMI->isCall());
+
   auto CMIIt = CMI->getIterator();
   if (std::next(CMIIt) == Target)
     return false;
 
-  const uint32_t *RegMask = nullptr;
-  for (const MachineOperand &MO : CMI->operands()) {
-    if (MO.isRegMask()) {
-      RegMask = MO.getRegMask();
-      break;
-    }
-  }
-  assert(RegMask);
+  const uint32_t *CheckRegMask = getCallRegMask(*CMI);
+  const uint32_t *CallRegMask = getCallRegMask(*Target);
+  assert(CheckRegMask && CallRegMask);
   auto I = CMI->getIterator();
   ++I;
   SmallVector<Register> ImmutableRegs = TRI->getCFGuardCheckImmutableRegs();
+  SmallVector<Register> CallUses = getRegUses(*Target);
   for (; I != Target; ++I) {
     auto &MI = *I;
     for (const MachineOperand &MO : MI.operands()) {
@@ -65,9 +86,15 @@ bool CFGuardGlueImpl::glueCFGCheckAndCall(
       if (llvm::is_contained(ImmutableRegs, R))
         continue;
       MCPhysReg MCR = R.asMCReg();
-      if (TRI->isCFGuardCheckArgumentRegister(MCR) ||
-          MachineOperand::clobbersPhysReg(RegMask, MCR))
+      if (TRI->isCFGuardCheckArgumentRegister(MCR))
         return false;
+      if (MachineOperand::clobbersPhysReg(CheckRegMask, MCR)) {
+        if (regOverlaps(R, CallUses))
+          return false;
+        // Register survives second call, but not first
+        if (!MachineOperand::clobbersPhysReg(CallRegMask, MCR))
+          return false;
+      }
     }
   }
 
